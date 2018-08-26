@@ -1,0 +1,28 @@
+---
+- hosts: raspberry_pi
+  remote_user: pi
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: patch raspian host os
+      register: task_result
+      apt:
+        update_cache: yes
+        cache_valid_time: 1200
+        state: latest
+
+    - name: Rebooting
+      shell: "sleep 5 && shutdown -r now"
+      async: 1
+      poll: 0
+      when: task_result is changed
+
+    - name: Waiting for host to reboot
+      wait_for_connection:
+        connect_timeout: 20
+        sleep: 5
+        delay: 5
+        timeout: 60
+      when: task_result is changed
+
